@@ -14,8 +14,16 @@ data augmentation to combat overfitting on the small ECG training set (~500 imag
   - Evaluation is NEVER augmented — standard hard-label accuracy is preserved
 
 ** Pushed to **
-  Branch : mixup-cutmix-aug
-  HF repo: MMM0003/ecg-classifier-mixup
+  HF repo  : MMM0003/ecg-classifier  (same repo as your existing model)
+  Branch   : mixup-cutmix            (new branch — main branch is UNTOUCHED)
+
+  To load the original model (no augmentation):
+      ViTForImageClassification.from_pretrained("MMM0003/ecg-classifier")
+
+  To load the MixUp/CutMix model (after running this script):
+      ViTForImageClassification.from_pretrained(
+          "MMM0003/ecg-classifier", revision="mixup-cutmix"
+      )
 
 ** How to Run on Kaggle (FREE T4 GPU) **
 1. Go to https://www.kaggle.com/code → click "New Notebook"
@@ -70,8 +78,10 @@ DATASET_ID   = "edcci/GenECG"
 MODEL_ID     = "google/vit-base-patch16-224-in21k"
 
 HF_USERNAME  = "MMM0003"
-# Separate model name to preserve the baseline ecg-classifier-10
-HUB_MODEL_ID = f"{HF_USERNAME}/ecg-classifier-mixup"
+# Target the EXISTING ecg-classifier repo — no new repo is created.
+# The MixUp model will be pushed to a separate branch so main stays untouched.
+HUB_MODEL_ID = f"{HF_USERNAME}/ecg-classifier"
+HUB_BRANCH   = "mixup-cutmix"   # new branch inside the same HF repo
 
 OUTPUT_DIR   = "./ecg-mixup-results"
 MAX_RETRIES  = 3
@@ -671,8 +681,9 @@ def run_training():
             learning_rate=2e-4,
             save_total_limit=2,
             remove_unused_columns=False,
-            push_to_hub=True,
-            hub_model_id=HUB_MODEL_ID,
+            # push_to_hub disabled during training — we do a targeted branch
+            # push manually at the end so the repo's main branch is never touched.
+            push_to_hub=False,
             save_strategy="steps",
         )
 
@@ -724,11 +735,41 @@ def run_training():
             return
 
     if training_complete:
-        print("\n✅ Training complete! Pushing model to Hugging Face Hub...")
-        trainer.push_to_hub()
-        print(f"🎉 Model pushed to: https://huggingface.co/{HUB_MODEL_ID}")
-        print(f"   Branch: mixup-cutmix-aug")
-        print("   You can now use this model ID in your HRV Analysis Platform!")
+        print(f"\n✅ Training complete!")
+        print(f"   Pushing to branch '{HUB_BRANCH}' on {HUB_MODEL_ID} ...")
+        print(f"   (The 'main' branch — your original ecg-classifier — will NOT be touched)")
+
+        from huggingface_hub import HfApi
+        api = HfApi()
+
+        # Create the branch if it doesn't already exist
+        try:
+            api.create_branch(HUB_MODEL_ID, branch=HUB_BRANCH, exist_ok=True)
+            print(f"   ✅ Branch '{HUB_BRANCH}' ready on HF Hub")
+        except Exception as e:
+            print(f"   ⚠️  Could not create branch (may already exist): {e}")
+
+        # Push model weights + config to the branch
+        trainer.model.push_to_hub(
+            HUB_MODEL_ID,
+            revision=HUB_BRANCH,
+            commit_message=f"Add MixUp/CutMix ({AUG_MODE}) augmented model",
+        )
+        # Push the image processor / tokenizer config
+        processor.push_to_hub(
+            HUB_MODEL_ID,
+            revision=HUB_BRANCH,
+            commit_message="Add processor config for mixup-cutmix branch",
+        )
+
+        print(f"\n🎉 Done! MixUp/CutMix model pushed to:")
+        print(f"   https://huggingface.co/{HUB_MODEL_ID}/tree/{HUB_BRANCH}")
+        print(f"\nTo use this model in your HRV Platform:")
+        print(f"   ViTForImageClassification.from_pretrained(")
+        print(f"       \"{HUB_MODEL_ID}\", revision=\"{HUB_BRANCH}\"")
+        print(f"   )")
+        print(f"\nYour original model (no augmentation) is still at:")
+        print(f"   ViTForImageClassification.from_pretrained(\"{HUB_MODEL_ID}\")")
     else:
         print(f"\n❌ Training failed after {MAX_RETRIES} attempts.")
         print("   Your latest checkpoint is preserved. Fix the issue and re-run.")
