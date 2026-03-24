@@ -85,7 +85,8 @@ def calculate_hrv_parameters(rr_intervals):
     # HRV library's frequency-domain analysis function.
     # We will use Welch's method for demonstration, assuming 256ms sample rate for simplicity
     fs = 1000 / np.mean(rr_intervals)
-    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=256)
+    nperseg = min(256, len(rr_intervals))
+    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=nperseg)
     
     # Define frequency bands
     lf_band = (0.04, 0.15)
@@ -200,7 +201,8 @@ def main():
     # For now, we will re-calculate the values here as a demonstration.
     
     fs = 1000 / np.mean(rr_intervals)
-    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=256)
+    nperseg = min(256, len(rr_intervals))
+    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=nperseg)
     
     diffs = np.diff(rr_intervals)
     sd1 = np.std(np.diff(rr_intervals) / np.sqrt(2))

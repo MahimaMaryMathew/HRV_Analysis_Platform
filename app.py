@@ -290,12 +290,37 @@ def generate_mock_rr_intervals(num_points=500):
     rr_intervals = np.clip(rr_intervals, 400, 1500)
     return rr_intervals
 
+def _compute_psd(rr_intervals):
+    """
+    Computes the PSD of RR intervals using the standard HRV method:
+      1. Build cumulative time axis (ms → s)
+      2. Interpolate to a uniform 4 Hz grid
+      3. Subtract the mean (detrend) to remove DC/VLF bias
+      4. Apply Welch's method
+    Returns (freqs, pxx, fs_interp).
+    """
+    fs_interp = 4.0  # Standard HRV resampling rate (Hz)
+    # Cumulative time in seconds
+    t = np.cumsum(rr_intervals) / 1000.0
+    t = t - t[0]  # start at 0
+    # Uniform time grid
+    t_uniform = np.arange(0, t[-1], 1.0 / fs_interp)
+    # Cubic interpolation to uniform grid
+    from scipy.interpolate import interp1d
+    interp_fn = interp1d(t, rr_intervals, kind='cubic', fill_value='extrapolate')
+    rr_uniform = interp_fn(t_uniform)
+    # Detrend: remove mean to eliminate DC/VLF bias from slow trends
+    rr_detrended = signal.detrend(rr_uniform, type='linear')
+    # Welch PSD
+    nperseg = min(256, len(rr_detrended))
+    freqs, pxx = signal.welch(rr_detrended, fs=fs_interp, nperseg=nperseg, window='hann')
+    return freqs, pxx, fs_interp
+
 def generate_plot_base64(rr_intervals, sd1, sd2):
     """
     Generates HRV plots and returns them as a base64 encoded string.
     """
-    fs = 1000 / np.mean(rr_intervals)
-    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=256)
+    freqs, pxx, fs_interp = _compute_psd(rr_intervals)
     
     img = io.BytesIO()
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
@@ -339,8 +364,7 @@ def calculate_hrv_parameters(rr_intervals):
     sdnn = np.std(rr_intervals, ddof=1)
     rmssd = np.sqrt(np.mean(np.diff(rr_intervals) ** 2))
     
-    fs = 1000.0 / mean_rr
-    freqs, pxx = signal.welch(x=rr_intervals, fs=fs, nperseg=256)
+    freqs, pxx, _ = _compute_psd(rr_intervals)
     
     vlf_band = (0.003, 0.04)
     lf_band = (0.04, 0.15)
@@ -441,7 +465,7 @@ def analyze_hrv_with_results_storage():
         logging.error(f"An error occurred during analysis: {e}", exc_info=True)
         return jsonify({'error': 'An error occurred during analysis. Please try again.'}), 500
 
-from remote_ai import get_feedback_from_ai
+from remote_ai import get_feedback_from_ai, analyze_ecg_with_ai, analyze_ecg_with_custom_hf_model
 
 @app.route('/get_feedback', methods=['GET'])
 def get_feedback():
@@ -458,6 +482,31 @@ def get_feedback():
     except Exception as e:
         logging.error(f"Error in feedback route: {e}")
         return jsonify({'error': 'Failed to generate feedback.'}), 500
+
+@app.route('/analyze_ecg_image', methods=['POST'])
+def analyze_ecg_image():
+    logging.info("Starting ECG Image analysis...")
+    request_data = request.get_json(silent=True)
+    
+    if not request_data or 'image' not in request_data:
+        return jsonify({'error': 'No image data provided.'}), 400
+
+    image_data_url = request_data.get('image')
+    model_type = request_data.get('model_type', 'custom') # default to custom trained ECG model
+    custom_model_id = request_data.get('custom_model_id', '')
+
+    try:
+        if model_type == 'custom' and custom_model_id:
+            feedback_text = analyze_ecg_with_custom_hf_model(image_data_url, custom_model_id)
+        else:
+            feedback_text = analyze_ecg_with_ai(image_data_url)
+            
+        if feedback_text.startswith("Error:"):
+            return jsonify({'error': feedback_text}), 500
+        return jsonify({'feedback': feedback_text})
+    except Exception as e:
+        logging.error(f"Error in analyze_ecg_image route: {e}")
+        return jsonify({'error': 'Failed to process ECG image.'}), 500
 
 if __name__ == '__main__':
       app.run(host='0.0.0.0', port=5000, debug=True)

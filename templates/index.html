@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #72b3de;
             color: #333;
         }
+
         .container {
             max-width: 960px;
             margin: 2rem auto;
@@ -20,17 +23,21 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .tab-button.active {
             border-bottom: 2px solid #3b82f6;
             color: #3b82f6;
         }
+
         .button {
             transition: all 0.2s ease-in-out;
         }
+
         .button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .result-box {
             background-color: #f8fafc;
             border-radius: 8px;
@@ -38,6 +45,7 @@
             margin-top: 1rem;
             border: 1px solid #e2e8f0;
         }
+
         .loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: #3b82f6;
@@ -46,9 +54,13 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
+
         /* Style for the Clinical Feedback section */
         #clinicalFeedback {
             padding: 1.5rem;
@@ -61,11 +73,12 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-100 p-6">
 
     <div class="container">
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">HRV Analysis Dashboard</h1>
-        
+
         <!-- Tab Navigation -->
         <div class="flex border-b border-gray-200 mb-6">
             <button id="tab-csv" class="tab-button active py-2 px-4 font-medium text-gray-600 focus:outline-none">
@@ -77,6 +90,9 @@
             <button id="tab-device" class="tab-button py-2 px-4 font-medium text-gray-600 focus:outline-none">
                 Device Sync
             </button>
+            <button id="tab-ecg" class="tab-button py-2 px-4 font-medium text-gray-600 focus:outline-none">
+                Upload ECG
+            </button>
             <button id="tab-mock" class="tab-button py-2 px-4 font-medium text-gray-600 focus:outline-none">
                 Analyze Mock Data
             </button>
@@ -86,10 +102,11 @@
 
 
 
-        
+
 
         <!-- Dynamic Message Box -->
-        <div id="messageBox" class="hidden mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300"></div>
+        <div id="messageBox"
+            class="hidden mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300"></div>
 
         <!-- Tab Content -->
         <div id="content-csv" class="tab-content">
@@ -100,312 +117,475 @@
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
                     file:bg-violet-50 file:text-violet-700
-                    hover:file:bg-violet-100"/>
-                <button id="uploadButton" class="button mt-6 bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
+                    hover:file:bg-violet-100" />
+                <button id="uploadButton"
+                    class="button mt-6 bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
                     Analyze HRV Data
                 </button>
             </div>
         </div>
 
 
-        
+
         <div id="content-manual" class="tab-content hidden">
             <div class="flex flex-col items-center">
-                <p class="text-center text-gray-600 mb-4">Enter comma-separated RR-intervals (e.g., 800, 810, 795, ...).</p>
-                <textarea id="manualData" rows="6" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all"></textarea>
-                <button id="manualButton" class="button mt-6 bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
+                <p class="text-center text-gray-600 mb-4">Enter comma-separated RR-intervals (e.g., 800, 810, 795, ...).
+                </p>
+                <textarea id="manualData" rows="6"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all"></textarea>
+                <button id="manualButton"
+                    class="button mt-6 bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
                     Analyze HRV Data
                 </button>
             </div>
         </div>
 
-      <div id="content-device" class="tab-content hidden">
-    <div class="flex flex-col items-center">
-        <p class="text-center text-gray-600 mb-6">Connect your Fitbit account to pull real-time heart rate data for analysis.</p>
-        
-        <div class="sync-container">
-            <a href="{{ url_for('auth_fitbit') }}" class="fitbit-btn">
-                <img src="https://www.fitbit.com/favicon.ico" alt="Fitbit">
-                Connect & Sync Fitbit
-            </a>
+        <div id="content-device" class="tab-content hidden">
+            <div class="flex flex-col items-center">
+                <p class="text-center text-gray-600 mb-6">Connect your Fitbit account to pull real-time heart rate data
+                    for analysis.</p>
+
+                <div class="sync-container">
+                    <a href="{{ url_for('auth_fitbit') }}" class="fitbit-btn">
+                        <img src="https://www.fitbit.com/favicon.ico" alt="Fitbit">
+                        Connect & Sync Fitbit
+                    </a>
+                </div>
+
+                <div class="flex gap-4 mt-8">
+                    <button
+                        class="opacity-50 cursor-not-allowed bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-full shadow-sm">
+                        Google Fit (Coming Soon)
+                    </button>
+                    <button
+                        class="opacity-50 cursor-not-allowed bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-full shadow-sm">
+                        Garmin (Coming Soon)
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <div class="flex gap-4 mt-8">
-            <button class="opacity-50 cursor-not-allowed bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-full shadow-sm">
-                Google Fit (Coming Soon)
-            </button>
-            <button class="opacity-50 cursor-not-allowed bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-full shadow-sm">
-                Garmin (Coming Soon)
+        <style>
+            .fitbit-btn {
+                background-color: #00B0B9;
+                color: white !important;
+                padding: 16px 32px;
+                text-decoration: none;
+                border-radius: 50px;
+                font-weight: bold;
+                display: inline-flex;
+                align-items: center;
+                transition: all 0.3s ease;
+                box-shadow: 0 10px 15px -3px rgba(0, 176, 185, 0.3);
+            }
+
+            .fitbit-btn:hover {
+                background-color: #008c93;
+                transform: scale(1.05);
+            }
+
+            .fitbit-btn img {
+                width: 24px;
+                margin-right: 12px;
+            }
+        </style>
+
+    </div>
+    </div>
+    </div>
+
+
+
+    <div id="content-mock" class="tab-content hidden">
+        <div class="flex flex-col items-center">
+            <p class="text-center text-gray-600 mb-4">Run an analysis with a mock dataset to see how the dashboard
+                works.</p>
+            <button id="mockButton"
+                class="button bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
+                Analyze Mock Data
             </button>
         </div>
     </div>
-</div>
 
-<style>
-    .fitbit-btn {
-        background-color: #00B0B9;
-        color: white !important;
-        padding: 16px 32px;
-        text-decoration: none;
-        border-radius: 50px;
-        font-weight: bold;
-        display: inline-flex;
-        align-items: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 10px 15px -3px rgba(0, 176, 185, 0.3);
-    }
-    .fitbit-btn:hover {
-        background-color: #008c93;
-        transform: scale(1.05);
-    }
-    .fitbit-btn img {
-        width: 24px;
-        margin-right: 12px;
-    }
-</style>
+    <div id="content-ecg" class="tab-content hidden">
+        <div
+            class="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-white shadow-sm max-w-2xl mx-auto">
+            <p class="text-center text-gray-600 mb-4 text-lg">Upload an ECG image for AI Analysis</p>
+            <input type="file" id="ecgFile" accept="image/*" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-violet-50 file:text-violet-700
+                    hover:file:bg-violet-100 mb-4" />
 
+            <div class="w-full mb-4">
+                <label for="modelType" class="block text-sm font-medium text-gray-700 mb-1">Select AI Model</label>
+                <select id="modelType"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-sm mb-3">
+                    <option value="custom">Custom Trained ECG Model (MMM0003/ecg-classifier-v2-balanced)</option>
+                    <option value="general">General Cardiology Vision Model (Qwen-VL)</option>
+                </select>
+
+                <div id="customModelInputDiv">
+                    <label for="customModelId" class="block text-sm font-medium text-gray-700 mb-1">Hugging Face Model
+                        ID</label>
+                    <input type="text" id="customModelId" value="MMM0003/ecg-classifier-v2-balanced"
+                        class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all text-sm">
+                    <p class="text-xs text-gray-500 mt-1">Make sure your HF_TOKEN has read access to this model if it is
+                        private.</p>
                 </div>
+            </div>
+
+            <div id="ecgPreview" class="hidden w-full flex justify-center mt-2 mb-4">
+                <img id="ecgImagePreview" src="" alt="ECG Preview"
+                    class="max-w-full h-auto max-h-64 rounded-lg shadow-md border border-gray-200" />
+            </div>
+            <button id="ecgButton"
+                class="button bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
+                Analyze ECG Image
+            </button>
+        </div>
+
+        <div id="ecgResultsSection" class="hidden mt-6 max-w-2xl mx-auto">
+            <div class="mt-4 text-center" id="ecgLoadingIndicator">
+                <div class="loading-spinner mx-auto mb-2"></div>
+                <p class="text-gray-600 flex justify-center items-center">The AI is analyzing your ECG...</p>
+            </div>
+            <div id="ecgFeedbackSection" class="hidden mt-4">
+                <h2 class="text-xl font-bold text-gray-800 text-center mb-4">ECG Analysis Results</h2>
+                <div id="ecgClinicalFeedback"
+                    class="text-gray-700 p-4 rounded-lg bg-gray-50 border border-gray-200 leading-relaxed"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Results Section -->
+    <div id="resultsSection" class="hidden">
+        <div class="mt-8 text-center" id="loadingIndicator">
+            <div class="loading-spinner mx-auto"></div>
+            <p class="mt-2 text-gray-600">Analyzing data...</p>
+        </div>
+
+        <div id="analysisResults" class="hidden mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-4">Analysis Results</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                <div class="result-box">
+                    <p class="text-gray-500 text-sm">Mean RR (ms)</p>
+                    <p id="mean_rr" class="text-xl font-semibold mt-1"></p>
+                </div>
+                <div class="result-box">
+                    <p class="text-gray-500 text-sm">SDNN (ms)</p>
+                    <p id="sdnn" class="text-xl font-semibold mt-1"></p>
+                </div>
+                <div class="result-box">
+                    <p class="text-gray-500 text-sm">RMSSD (ms)</p>
+                    <p id="rmssd" class="text-xl font-semibold mt-1"></p>
+                </div>
+                <div class="result-box">
+                    <p class="text-gray-500 text-sm">LF/HF Ratio</p>
+                    <p id="lf_hf_ratio" class="text-xl font-semibold mt-1"></p>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <img id="hrvPlot" class="w-full h-auto rounded-lg shadow-md border border-gray-200"
+                    alt="HRV Analysis Plots" />
             </div>
         </div>
 
-        
 
-        <div id="content-mock" class="tab-content hidden">
-            <div class="flex flex-col items-center">
-                <p class="text-center text-gray-600 mb-4">Run an analysis with a mock dataset to see how the dashboard works.</p>
-                <button id="mockButton" class="button bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-all">
-                    Analyze Mock Data
+
+
+
+
+
+
+
+        <!-- Clinical Feedback Section -->
+        <div id="feedbackSection" class="hidden mt-8">
+            <div class="flex justify-center mb-4">
+                <button id="feedbackButton"
+                    class="button bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-green-600 transition-all">
+                    Get Clinical Feedback
                 </button>
             </div>
+            <div id="clinicalFeedback" class="text-gray-700"></div>
         </div>
+    </div>
 
-        <!-- Analysis Results Section -->
-        <div id="resultsSection" class="hidden">
-            <div class="mt-8 text-center" id="loadingIndicator">
-                <div class="loading-spinner mx-auto"></div>
-                <p class="mt-2 text-gray-600">Analyzing data...</p>
-            </div>
-            
-            <div id="analysisResults" class="hidden mt-8">
-                <h2 class="text-2xl font-bold text-gray-800 text-center mb-4">Analysis Results</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-                    <div class="result-box">
-                        <p class="text-gray-500 text-sm">Mean RR (ms)</p>
-                        <p id="mean_rr" class="text-xl font-semibold mt-1"></p>
-                    </div>
-                    <div class="result-box">
-                        <p class="text-gray-500 text-sm">SDNN (ms)</p>
-                        <p id="sdnn" class="text-xl font-semibold mt-1"></p>
-                    </div>
-                    <div class="result-box">
-                        <p class="text-gray-500 text-sm">RMSSD (ms)</p>
-                        <p id="rmssd" class="text-xl font-semibold mt-1"></p>
-                    </div>
-                    <div class="result-box">
-                        <p class="text-gray-500 text-sm">LF/HF Ratio</p>
-                        <p id="lf_hf_ratio" class="text-xl font-semibold mt-1"></p>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <img id="hrvPlot" class="w-full h-auto rounded-lg shadow-md border border-gray-200" alt="HRV Analysis Plots"/>
-                </div>
-            </div>
-
-            
-
-
-
-
-
-
-
-            <!-- Clinical Feedback Section -->
-            <div id="feedbackSection" class="hidden mt-8">
-                <div class="flex justify-center mb-4">
-                    <button id="feedbackButton" class="button bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-green-600 transition-all">
-                        Get Clinical Feedback
-                    </button>
-                </div>
-                <div id="clinicalFeedback" class="text-gray-700"></div>
-            </div>
-        </div>
-        
     </div>
 
     <script>
-       document.addEventListener('DOMContentLoaded', () => {
-    const tabs = {
-        csv: document.getElementById('tab-csv'),
-        manual: document.getElementById('tab-manual'),
-        device: document.getElementById('tab-device'),
-        mock: document.getElementById('tab-mock')
-    };
-    const contents = {
-        csv: document.getElementById('content-csv'),
-        manual: document.getElementById('content-manual'),
-        device: document.getElementById('content-device'),
-        mock: document.getElementById('content-mock')
-    };
-    const messageBox = document.getElementById('messageBox');
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = {
+                csv: document.getElementById('tab-csv'),
+                manual: document.getElementById('tab-manual'),
+                device: document.getElementById('tab-device'),
+                ecg: document.getElementById('tab-ecg'),
+                mock: document.getElementById('tab-mock')
+            };
+            const contents = {
+                csv: document.getElementById('content-csv'),
+                manual: document.getElementById('content-manual'),
+                device: document.getElementById('content-device'),
+                ecg: document.getElementById('content-ecg'),
+                mock: document.getElementById('content-mock')
+            };
+            const messageBox = document.getElementById('messageBox');
 
-    function showMessage(message, type = 'info') {
-        messageBox.textContent = message;
-        messageBox.className = 'mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300';
-        messageBox.classList.remove('hidden');
-        const colors = {
-            error: ['bg-red-100', 'text-red-700'],
-            success: ['bg-green-100', 'text-green-700'],
-            info: ['bg-blue-100', 'text-blue-700']
-        };
-        messageBox.classList.add(...(colors[type] || colors.info));
-        setTimeout(() => messageBox.classList.add('hidden'), 5000);
-    }
-
-    function showTab(activeKey) {
-        // Switch Tab UI
-        Object.keys(tabs).forEach(key => {
-            tabs[key].classList.toggle('active', key === activeKey);
-            contents[key].classList.toggle('hidden', key !== activeKey);
-        });
-    }
-
-    function showLoading(show) {
-        document.getElementById('resultsSection').classList.toggle('hidden', !show);
-        document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
-        document.getElementById('analysisResults').classList.add('hidden');
-    }
-
-    function displayResults(result) {
-        document.getElementById('loadingIndicator').classList.add('hidden');
-        document.getElementById('analysisResults').classList.remove('hidden');
-        document.getElementById('feedbackSection').classList.remove('hidden');
-        
-        document.getElementById('mean_rr').textContent = result.results.mean_rr.toFixed(2);
-        document.getElementById('sdnn').textContent = result.results.sdnn.toFixed(2);
-        document.getElementById('rmssd').textContent = result.results.rmssd.toFixed(2);
-        document.getElementById('lf_hf_ratio').textContent = result.results.lf_hf_ratio.toFixed(2);
-        document.getElementById('hrvPlot').src = `data:image/png;base64,${result.plot}`;
-    }
-
-    // Tab Click Listeners
-    Object.keys(tabs).forEach(key => {
-        tabs[key].addEventListener('click', () => showTab(key));
-    });
-
-    async function sendDataToBackend(data, method) {
-        showLoading(true);
-        try {
-            const response = await fetch('/analyze_hrv', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: data, method: method }),
-            });
-            const result = await response.json();
-            if (response.ok) {
-                displayResults(result);
-            } else {
-                showMessage(result.error, 'error');
-                document.getElementById('resultsSection').classList.add('hidden');
+            function showMessage(message, type = 'info') {
+                messageBox.textContent = message;
+                messageBox.className = 'mb-4 p-3 rounded-lg text-sm text-center font-medium transition-all duration-300';
+                messageBox.classList.remove('hidden');
+                const colors = {
+                    error: ['bg-red-100', 'text-red-700'],
+                    success: ['bg-green-100', 'text-green-700'],
+                    info: ['bg-blue-100', 'text-blue-700']
+                };
+                messageBox.classList.add(...(colors[type] || colors.info));
+                setTimeout(() => messageBox.classList.add('hidden'), 5000);
             }
-        } catch (error) {
-            showMessage('Connection failed.', 'error');
-        }
-    }
 
-    // Button Listeners
-    document.getElementById('uploadButton').addEventListener('click', () => {
-        const file = document.getElementById('csvFile').files[0];
-        if (!file) return showMessage('Select a file', 'error');
-        const reader = new FileReader();
-        reader.onload = (e) => sendDataToBackend(e.target.result, 'csv');
-        reader.readAsText(file);
-    });
+            function showTab(activeKey) {
+                // Switch Tab UI
+                Object.keys(tabs).forEach(key => {
+                    tabs[key].classList.toggle('active', key === activeKey);
+                    contents[key].classList.toggle('hidden', key !== activeKey);
+                });
+            }
 
-    document.getElementById('manualButton').addEventListener('click', () => {
-        const data = document.getElementById('manualData').value;
-        if (!data) return showMessage('Enter data', 'error');
-        sendDataToBackend(data, 'manual');
-    });
+            function showLoading(show) {
+                document.getElementById('resultsSection').classList.toggle('hidden', !show);
+                document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
+                document.getElementById('analysisResults').classList.add('hidden');
+            }
 
-    document.getElementById('mockButton').addEventListener('click', () => sendDataToBackend(null, 'mock'));
+            function displayResults(result) {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('analysisResults').classList.remove('hidden');
+                document.getElementById('feedbackSection').classList.remove('hidden');
 
-    // --- CRITICAL FIX FOR REDIRECT ---
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('tab') === 'device') {
-        showTab('device');
-        showMessage('Fitbit Synced! Analyzing your heart rate...', 'success');
-        // Automatically trigger analysis for Fitbit data
-        sendDataToBackend(null, 'device'); 
-    }
-   // --- CLINICAL FEEDBACK HANDLER ---
-    document.getElementById('feedbackButton').addEventListener('click', async () => {
-        const feedbackBtn = document.getElementById('feedbackButton');
-        const feedbackDiv = document.getElementById('clinicalFeedback');
+                document.getElementById('mean_rr').textContent = result.results.mean_rr.toFixed(2);
+                document.getElementById('sdnn').textContent = result.results.sdnn.toFixed(2);
+                document.getElementById('rmssd').textContent = result.results.rmssd.toFixed(2);
+                document.getElementById('lf_hf_ratio').textContent = result.results.lf_hf_ratio.toFixed(2);
+                document.getElementById('hrvPlot').src = `data:image/png;base64,${result.plot}`;
+            }
 
-        // 1. Show loading state
-        feedbackBtn.disabled = true;
-        feedbackBtn.textContent = "AI is thinking...";
-        feedbackBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        feedbackDiv.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-        
-        // Reset styles for a fresh start
-        feedbackDiv.style.borderLeft = "none";
-        feedbackDiv.style.color = "inherit";
+            // Tab Click Listeners
+            Object.keys(tabs).forEach(key => {
+                tabs[key].addEventListener('click', () => showTab(key));
+            });
 
-        try {
-            const response = await fetch('/get_feedback');
-            const data = await response.json();
+            async function sendDataToBackend(data, method) {
+                showLoading(true);
+                try {
+                    const response = await fetch('/analyze_hrv', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: data, method: method }),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        displayResults(result);
+                    } else {
+                        showMessage(result.error, 'error');
+                        document.getElementById('resultsSection').classList.add('hidden');
+                    }
+                } catch (error) {
+                    showMessage('Connection failed.', 'error');
+                }
+            }
 
-            if (data.feedback) {
-                const text = data.feedback;
-                feedbackDiv.textContent = text;
-                // In your index.html script section
-if (text.includes("Baseline Rhythm")) {
-    feedbackDiv.style.borderLeft = "8px solid #3b82f6"; // Blue for Neutral
-    feedbackDiv.style.backgroundColor = "#eff6ff";
-}
+            // Button Listeners
+            document.getElementById('ecgFile').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const preview = document.getElementById('ecgPreview');
+                    const imgPreview = document.getElementById('ecgImagePreview');
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        imgPreview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                        document.getElementById('ecgFeedbackSection').classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
 
-                // 2. ARRYTHMIA COLOR LOGIC
-                if (text.includes("Consult Specialist")) {
-                    feedbackDiv.style.borderLeft = "8px solid #ef4444"; // Red
-                    feedbackDiv.style.backgroundColor = "#fee2e2";      // Light Red background
-                } else if (text.includes("High Variability")) {
-                    feedbackDiv.style.borderLeft = "8px solid #f59e0b"; // Orange
-                    feedbackDiv.style.backgroundColor = "#fffbeb";      // Light Orange background
-                } else if (text.includes("Normal Rhythm")) {
-                    feedbackDiv.style.borderLeft = "8px solid #10b981"; // Green
-                    feedbackDiv.style.backgroundColor = "#ecfdf5";      // Light Green background
+            document.getElementById('ecgButton').addEventListener('click', async () => {
+                const file = document.getElementById('ecgFile').files[0];
+                if (!file) return showMessage('Select an ECG image file', 'error');
+
+                const modelType = document.getElementById('modelType').value;
+                const customModelId = document.getElementById('customModelId').value;
+
+                if (modelType === 'custom' && !customModelId.trim()) {
+                    return showMessage('Please enter your Custom Hugging Face Model ID', 'error');
                 }
 
-            } else {
-                feedbackDiv.textContent = "Error: " + (data.error || "Could not get feedback.");
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64Image = e.target.result;
+
+                    const resultsSection = document.getElementById('ecgResultsSection');
+                    const loadingIndicator = document.getElementById('ecgLoadingIndicator');
+                    const feedbackSection = document.getElementById('ecgFeedbackSection');
+                    const feedbackDiv = document.getElementById('ecgClinicalFeedback');
+                    const ecgBtn = document.getElementById('ecgButton');
+
+                    resultsSection.classList.remove('hidden');
+                    loadingIndicator.classList.remove('hidden');
+                    feedbackSection.classList.add('hidden');
+                    ecgBtn.disabled = true;
+                    ecgBtn.textContent = "Analyzing...";
+                    ecgBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                    try {
+                        const response = await fetch('/analyze_ecg_image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                image: base64Image,
+                                model_type: modelType,
+                                custom_model_id: customModelId
+                            }),
+                        });
+                        const result = await response.json();
+
+                        if (response.ok && result.feedback) {
+                            loadingIndicator.classList.add('hidden');
+                            feedbackSection.classList.remove('hidden');
+
+                            // Parse markdown formatting from custom model output if present
+                            let formattedFeedback = result.feedback;
+                            formattedFeedback = formattedFeedback.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            formattedFeedback = formattedFeedback.replace(/### (.*?)\n/g, '<h3 class="text-lg font-bold mt-2 mb-1">$1</h3>');
+                            formattedFeedback = formattedFeedback.replace(/- <strong>(.*?)</g, '<br>• <strong>$1<');
+
+                            feedbackDiv.innerHTML = formattedFeedback;
+
+                            feedbackDiv.style.borderLeft = "8px solid #3b82f6";
+                            feedbackDiv.style.backgroundColor = "#eff6ff";
+                        } else {
+                            showMessage(result.error || 'Connection failed.', 'error');
+                            resultsSection.classList.add('hidden');
+                        }
+                    } catch (error) {
+                        showMessage('Connection failed.', 'error');
+                        resultsSection.classList.add('hidden');
+                    } finally {
+                        ecgBtn.disabled = false;
+                        ecgBtn.textContent = "Analyze ECG Image";
+                        ecgBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            document.getElementById('uploadButton').addEventListener('click', () => {
+                const file = document.getElementById('csvFile').files[0];
+                if (!file) return showMessage('Select a file', 'error');
+                const reader = new FileReader();
+                reader.onload = (e) => sendDataToBackend(e.target.result, 'csv');
+                reader.readAsText(file);
+            });
+
+            document.getElementById('manualButton').addEventListener('click', () => {
+                const data = document.getElementById('manualData').value;
+                if (!data) return showMessage('Enter data', 'error');
+                sendDataToBackend(data, 'manual');
+            });
+
+            document.getElementById('mockButton').addEventListener('click', () => sendDataToBackend(null, 'mock'));
+
+            // Toggle custom model ID input visibility
+            document.getElementById('modelType').addEventListener('change', (e) => {
+                const customDiv = document.getElementById('customModelInputDiv');
+                if (e.target.value === 'custom') {
+                    customDiv.classList.remove('hidden');
+                } else {
+                    customDiv.classList.add('hidden');
+                }
+            });
+
+            // --- CRITICAL FIX FOR REDIRECT ---
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tab') === 'device') {
+                showTab('device');
+                showMessage('Fitbit Synced! Analyzing your heart rate...', 'success');
+                // Automatically trigger analysis for Fitbit data
+                sendDataToBackend(null, 'device');
             }
-        } catch (error) {
-            feedbackDiv.textContent = "Connection error. Is the server running?";
-            // Add this inside your .catch(error) or inside the logic that checks for data.error
-if (data.error && data.error.includes("quota")) {
-    let secondsLeft = 30;
-    feedbackDiv.textContent = `Quota reached. Please wait ${secondsLeft}s before retrying.`;
-    
-    const timer = setInterval(() => {
-        secondsLeft--;
-        feedbackDiv.textContent = `Quota reached. Please wait ${secondsLeft}s before retrying.`;
-        if (secondsLeft <= 0) {
-            clearInterval(timer);
-            feedbackDiv.textContent = "You can now retry the clinical feedback.";
-        }
-    }, 1000);
-}
-        } finally {
-            // 3. Reset button
-            feedbackBtn.disabled = false;
-            feedbackBtn.textContent = "Get Clinical Feedback";
-            feedbackBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-    });
-});
+            // --- CLINICAL FEEDBACK HANDLER ---
+            document.getElementById('feedbackButton').addEventListener('click', async () => {
+                const feedbackBtn = document.getElementById('feedbackButton');
+                const feedbackDiv = document.getElementById('clinicalFeedback');
+
+                // 1. Show loading state
+                feedbackBtn.disabled = true;
+                feedbackBtn.textContent = "AI is thinking...";
+                feedbackBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                feedbackDiv.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+
+                // Reset styles for a fresh start
+                feedbackDiv.style.borderLeft = "none";
+                feedbackDiv.style.color = "inherit";
+
+                try {
+                    const response = await fetch('/get_feedback');
+                    const data = await response.json();
+
+                    if (data.feedback) {
+                        const text = data.feedback;
+                        feedbackDiv.textContent = text;
+                        // In your index.html script section
+                        if (text.includes("Baseline Rhythm")) {
+                            feedbackDiv.style.borderLeft = "8px solid #3b82f6"; // Blue for Neutral
+                            feedbackDiv.style.backgroundColor = "#eff6ff";
+                        }
+
+                        // 2. ARRYTHMIA COLOR LOGIC
+                        if (text.includes("Consult Specialist")) {
+                            feedbackDiv.style.borderLeft = "8px solid #ef4444"; // Red
+                            feedbackDiv.style.backgroundColor = "#fee2e2";      // Light Red background
+                        } else if (text.includes("High Variability")) {
+                            feedbackDiv.style.borderLeft = "8px solid #f59e0b"; // Orange
+                            feedbackDiv.style.backgroundColor = "#fffbeb";      // Light Orange background
+                        } else if (text.includes("Normal Rhythm")) {
+                            feedbackDiv.style.borderLeft = "8px solid #10b981"; // Green
+                            feedbackDiv.style.backgroundColor = "#ecfdf5";      // Light Green background
+                        }
+
+                    } else {
+                        feedbackDiv.textContent = "Error: " + (data.error || "Could not get feedback.");
+                    }
+                } catch (error) {
+                    feedbackDiv.textContent = "Connection error. Is the server running?";
+                    // Add this inside your .catch(error) or inside the logic that checks for data.error
+                    if (data.error && data.error.includes("quota")) {
+                        let secondsLeft = 30;
+                        feedbackDiv.textContent = `Quota reached. Please wait ${secondsLeft}s before retrying.`;
+
+                        const timer = setInterval(() => {
+                            secondsLeft--;
+                            feedbackDiv.textContent = `Quota reached. Please wait ${secondsLeft}s before retrying.`;
+                            if (secondsLeft <= 0) {
+                                clearInterval(timer);
+                                feedbackDiv.textContent = "You can now retry the clinical feedback.";
+                            }
+                        }, 1000);
+                    }
+                } finally {
+                    // 3. Reset button
+                    feedbackBtn.disabled = false;
+                    feedbackBtn.textContent = "Get Clinical Feedback";
+                    feedbackBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        });
     </script>
 </body>
+
 </html>
