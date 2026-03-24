@@ -1,14 +1,17 @@
 
 import os
-from dotenv import load_dotenv
 
-# Load the variables from .env
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass # python-dotenv not installed, assuming env vars differ
 
 # Replace hardcoded strings with these:
 CLIENT_ID = os.getenv('FITBIT_CLIENT_ID')
 CLIENT_SECRET = os.getenv('FITBIT_CLIENT_SECRET')
-API_KEY = os.getenv('GEMINI_API_KEY')
+
+
 
 
 
@@ -54,8 +57,7 @@ logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
-app.secret_key = "nsecret123"
-app.secret_key = os.getenv('FLASK_SECRET_KEY')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', "nsecret123")
 
 # 1. Configuration
 CLIENT_ID = os.getenv('FITBIT_CLIENT_ID')
@@ -67,6 +69,10 @@ SCOPE = ['heartrate', 'profile', 'activity']
 # 2. Start Authorization
 @app.route("/auth/fitbit")
 def auth_fitbit():
+     # This creates the Fitbit login link
+    if not CLIENT_ID or not CLIENT_SECRET:
+        return jsonify({'error': 'Missing Fitbit credentials. Please create a .env file with FITBIT_CLIENT_ID and FITBIT_CLIENT_SECRET.'}), 500
+
     # This creates the Fitbit login link
     fitbit = OAuth2Session(CLIENT_ID, scope=SCOPE, redirect_uri=REDIRECT_URI)
     authorization_url, state = fitbit.authorization_url("https://www.fitbit.com/oauth2/authorize")
@@ -434,63 +440,24 @@ def analyze_hrv_with_results_storage():
         # We will now print the actual error to the console for better debugging.
         logging.error(f"An error occurred during analysis: {e}", exc_info=True)
         return jsonify({'error': 'An error occurred during analysis. Please try again.'}), 500
+
+from remote_ai import get_feedback_from_ai
+
 @app.route('/get_feedback', methods=['GET'])
 def get_feedback():
     global last_analysis_results
-    api_key = os.getenv('GEMINI_API_KEY')
     
-    # 1. Dynamically find an available model
-    list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+    # Check if we have results to analyze
+    if not last_analysis_results:
+         return jsonify({'error': 'No analysis results found. Please run an HRV analysis first.'}), 400
+
+    logging.info("Requesting AI feedback from Hugging Face API...")
     try:
-        models_resp = requests.get(list_url)
-        available_models = models_resp.json().get('models', [])
-        model_name = next((m['name'] for m in available_models if 'generateContent' in m['supportedGenerationMethods']), None)
-        
-        if not model_name:
-            return jsonify({'error': 'No available models found.'}), 404
-            
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={api_key}"
-
-        # 2. Educational Prompt (Avoids Safety Filters)
-        payload = {
-            "contents": [{
-                "parts": [{
-                    "text": (
-                        "Act as an HRV Data Scientist. Provide an objective, educational report.\n\n"
-                        "ANALYSIS THRESHOLDS:\n"
-                        "1. STATUS: Baseline Activity -> RMSSD 25-85ms. Focus on stability.\n"
-                        "2. STATUS: Sympathetic Dominance -> LF/HF > 2.0. Focus on recovery needs.\n"
-                        "3. STATUS: High Variability -> RMSSD 86-115ms. Note as high fitness.\n"
-                        "4. STATUS: Potential Irregularity -> RMSSD > 120ms. Flag for professional review.\n\n"
-                        "MANDATORY TEMPLATE:\n"
-                        "STATUS: [Insert Label]\n"
-                        "DATA OBSERVATION: [Explain autonomic balance objectively.]\n"
-                        "HEALTH TIPS: [3 evidence-based lifestyle tips.]\n\n"
-                        "DISCLAIMER: 'For educational purposes only. Individual baselines vary.'\n\n"
-                        f"Data: RMSSD: {last_analysis_results.get('rmssd')}ms, LF/HF: {last_analysis_results.get('lf_hf_ratio')}."
-                    )
-                }]
-            }]
-        }
-        
-        # 3. Post request and handle hidden API errors
-        response = requests.post(api_url, json=payload, timeout=60)
-        res_json = response.json()
-
-        if 'error' in res_json:
-            logging.error(f"Google API Error: {res_json['error']['message']}")
-            return jsonify({'error': f"API Error: {res_json['error']['message']}"}), 500
-
-        if 'candidates' in res_json and res_json['candidates']:
-            ai_text = res_json['candidates'][0]['content']['parts'][0]['text']
-            return jsonify({'feedback': ai_text})
-        else:
-            # Captures cases where the safety filter blocked the response
-            logging.error(f"Full API Response (Blocked): {res_json}")
-            return jsonify({'error': 'The AI safety filter blocked this analysis. Try using less clinical terms.'}), 500
-
+        feedback_text = get_feedback_from_ai(last_analysis_results)
+        return jsonify({'feedback': feedback_text})
     except Exception as e:
-        logging.error(f"System Error: {str(e)}")
-        return jsonify({'error': 'Internal Server Error. Check terminal logs.'}), 500
+        logging.error(f"Error in feedback route: {e}")
+        return jsonify({'error': 'Failed to generate feedback.'}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True)
+      app.run(host='0.0.0.0', port=5000, debug=True)
